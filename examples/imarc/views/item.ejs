@@ -1,0 +1,17 @@
+<div class="author">
+	<img class="avatar" src="<%= author.avatar %>" />
+	<span class="name"><%= author.displayName %></span>
+</div>
+
+
+<% if (attachments.length) { %>
+
+	<% if (attachments[0].type == 'photo') { %>
+		<img class="attachment" src="<%= attachments[0].url %>" />
+	<% } %>
+
+<% } else { %>
+	<div class="message">
+		<%= body %>
+	</div>
+<% } %>

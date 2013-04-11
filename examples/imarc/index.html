@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<style type="text/css">
+
+		html, body {
+			padding: 0;
+			margin: 0;
+			background-color: #DBEAEA;
+			height: 100%;
+		}
+
+		div.bucket {
+			position: relative;
+			padding: 2em;
+			padding-top: 8em;
+			overflow-x: hidden;
+			height: 85%;
+		}
+
+		div.controls {
+			position: absolute;
+			top: 0;
+			left: 0;
+			background-color: rgba(56, 75, 86, .95);
+			width: 100%;
+			box-shadow: 0 0 10px #222;
+		}
+
+			div.bucket a.action {
+				display: block;
+				width: 25%;
+				font-size: 1.5em;
+				font-weight: bold;
+				margin: 1em auto;
+				padding: .5em;
+				border: solid 1px #222;
+				color: #666;
+				text-decoration: none;
+				background-color: #efefef;
+				border-radius: .25em;
+			}
+
+
+			div.bucket a.action.disabled {
+				color: #aaa;
+			}
+
+
+		.item {
+			position: absolute;
+			background-color: #efefef;
+			width: 19%;
+			float: left;
+			margin: .5%;
+			padding: 2.5%;
+			box-shadow: 0 0 20px #333;
+		}
+
+		.item img.attachment {
+			width: 100%
+		}
+
+		.item .author .avatar {
+			position: absolute;
+			top: -10px;
+			left: -10px;
+			border: solid 1px #222;
+			outline: solid 4px #fff;
+		}
+
+
+	</style>
+	<title>iMarc StreamHub Test</title>
+</head>
+	<body>
+		<script src="../../lib/requirejs/require.js" type="text/javascript"></script>
+		<script src="/requirejs.conf.js" type="text/javascript"></script>
+		<script>
+		require([
+			'streamhub-sdk',
+			'jquery',
+			'EJS'
+		],function (Hub, $) {
+
+			/**
+			 * Controller Class
+			 */
+			var Controller = (function(){
+
+				var self = null;
+
+				/**
+				 * Construct a new controller
+				 */
+				self = function() {
+					this.items        = [];
+					this.oldItemCount = 0;
+				};
+
+				/**
+				 * Connect to streams and start pulling data
+				 *
+				 * @param Streams A LiveFyre streams object
+				 * @return void
+				 */
+				self.prototype.connect = function(streams) {
+					var that     = this;
+					this.streams = streams;
+
+					this.streams.on('readable', function(stream) {
+						that.items.push(stream.read());
+						that.update();
+
+						console.log(stream);
+					}).start();
+
+					console.log(this.streams);
+				};
+
+				/**
+				 * Initialize our view and controller hooks
+				 */
+				self.prototype.init = function(element) {
+					var that     = this;
+
+					this.init    = false;
+					this.element = element;
+					this.view    = new EJS({url: 'imarc/views/main.ejs?x=' + Date.now()});
+
+					this.element.innerHTML = this.view.render({
+						items: this.items,
+						newItemCount: this.items.length - this.oldItemCount
+					});
+
+					this.$bucket = $(this.element).find('.bucket');
+					this.$action = $(this.element).find('.controls > a.action');
+
+					this.$action.click(function() {
+						that.makeItRain();
+
+						that.oldItemCount = that.items.length;
+						that.update();
+					});
+
+					this.init = true;
+				};
+
+
+				/**
+				 * Handle update to our item queue
+				 */
+				self.prototype.update = function() {
+					if (!this.init) {
+						return false;
+					}
+
+					var newItemCount = this.items.length - this.oldItemCount;
+
+					if (newItemCount) {
+						this.$action.removeClass('disabled');
+					} else {
+						this.$action.addClass('disabled');
+					}
+
+					this.$action.find('.count').text(newItemCount);
+				};
+
+
+				/**
+				 * Makes it rain
+				 */
+				 self.prototype.makeItRain = function() {
+				 	for (var x = this.oldItemCount; x < this.items.length; x++) {
+
+				 		//
+				 		// We should likely extend the EJS object into some sort of custom
+				 		// content view and add methods that do all this fancy stuff.
+				 		//
+
+				 		var item    = this.items[x];
+				 		var $bucket = this.$bucket;
+
+				 		console.log(item);
+
+				 		(function() {
+					 		var $item   = $('<div>').addClass('item').html(
+								new EJS({url: 'imarc/views/item.ejs'}).render(item)
+					 		);
+
+					 		setTimeout(function() {
+								$item.css({
+									zIndex: 5000,
+									left: (5 + (Math.floor(Math.random() * 61))) + '%',
+									top: (10 + (Math.floor(Math.random() * 71))) + '%'
+								}).animate({
+									zIndex: x
+								}, {
+									duration: 1000 + Math.floor(Math.random() * 4001),
+									step: function(zIndex) {
+										var percent = 1 + (zIndex/5000);
+
+										$item.css({
+											'transform': 'scale(' + percent + ')'
+										});
+
+									}
+								});
+
+					 			$bucket.prepend($item);
+					 		}, Math.floor(Math.random() * 20001));
+
+
+				 		})();
+				 	}
+				 };
+
+				return self;
+			})();
+
+			//
+			// We want to create a new instance of our view
+			//
+
+			var opts = {
+				network: "imarc-int-0.fyre.co",
+				siteId: "303917",
+				articleId: "2",
+				environment: "t402.livefyre.com"
+			};
+
+			var streams = new Hub.Streams.forCollection(opts);
+			var test = new Controller();
+
+			test.init(document.body);
+			test.connect(streams);
+
+		});
+		</script>
+	</body>
+</html>
