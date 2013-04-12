@@ -80,8 +80,9 @@
 		require([
 			'streamhub-sdk',
 			'jquery',
-			'EJS'
-		],function (Hub, $) {
+			'rejs!examples/imarc/views/main',
+			'rejs!examples/imarc/views/item'
+		],function (Hub, $, tmplMain, tmplItem) {
 
 			/**
 			 * Controller Class
@@ -126,9 +127,8 @@
 
 					this.init    = false;
 					this.element = element;
-					this.view    = new EJS({url: 'imarc/views/main.ejs?x=' + Date.now()});
 
-					this.element.innerHTML = this.view.render({
+					this.element.innerHTML = tmplMain({
 						items: this.items,
 						newItemCount: this.items.length - this.oldItemCount
 					});
@@ -184,9 +184,7 @@
 				 		console.log(item);
 
 				 		(function() {
-					 		var $item   = $('<div>').addClass('item').html(
-								new EJS({url: 'imarc/views/item.ejs'}).render(item)
-					 		);
+					 		var $item = $('<div>').addClass('item').html(tmplItem(item));
 
 					 		setTimeout(function() {
 								$item.css({

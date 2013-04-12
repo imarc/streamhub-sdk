@@ -11,7 +11,8 @@ require.config({
     jasmine: 'lib/jasmine/lib/jasmine-core/jasmine',
     'jasmine-html': 'lib/jasmine/lib/jasmine-core/jasmine-html',
     'jasmine-jquery': 'lib/jasmine-jquery/lib/jasmine-jquery',
-    ejs: 'lib/ejs/ejs'
+    ejs: 'lib/ejs/ejs',
+    rejs: 'lib/requirejs-ejs-plugin/rejs'
   },
   packages: [{
      name: "streamhub-sdk",
@@ -39,6 +40,9 @@ require.config({
     },
     'jasmine-jquery': {
         deps: ['jquery', 'jasmine']
+    },
+    ejs: {
+      exports: 'ejs'
     }
   },
   urlArgs: "_=" +  (new Date()).getTime()
